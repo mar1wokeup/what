@@ -64,6 +64,36 @@ class SelectionBox(QWidget):
         if event.key() == Qt.Key_Escape:
             self.close()
 
+class ResponseOverlay(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.initUI()
+
+    def initUI(self):
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setGeometry(0, 0, 800, 100)  # Adjust size for the rectangle
+        self.move(QApplication.desktop().screen().rect().center() - self.rect().center() - QPoint(0, 150))  # Position at bottom middle
+
+        layout = QVBoxLayout(self)
+        self.response_label = QLabel(self)
+        self.response_label.setAlignment(Qt.AlignCenter)
+        font = self.response_label.font()
+        font.setPointSize(16)  # Larger font size
+        self.response_label.setFont(font)
+        layout.addWidget(self.response_label)
+        self.setLayout(layout)
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QColor(128, 128, 128, 128))  # Transparent grey
+        painter.setPen(Qt.NoPen)
+        painter.drawRoundedRect(self.rect(), 10, 10)  # Rounded corners
+
+    def displayResponse(self, response_text):
+        self.response_label.setText(response_text)
+        self.show()
+
 class ScreenCaptureApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -211,7 +241,7 @@ class ScreenCaptureApp(QWidget):
         if not hasattr(self, 'response_overlay'):
             self.response_overlay = ResponseOverlay(self)
 
-        response_text = json.dumps(response, indent=4)  # Format the response as text
+        response_text = response.get('content', '')  # Extract 'content' field
         self.response_overlay.displayResponse(response_text)
 
     # def setupKeyboardShortcut(self):
@@ -223,30 +253,8 @@ class ScreenCaptureApp(QWidget):
         self.show()
         self.activateWindow()  # Brings the window to the front
 
-class ResponseOverlay(QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.initUI()
 
-    def initUI(self):
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setGeometry(100, 100, 400, 300)  # Adjust size and position as needed
 
-        layout = QVBoxLayout(self)
-
-        self.response_label = QLabel(self)
-        layout.addWidget(self.response_label)
-
-        self.setLayout(layout)
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
-            self.close()
-
-    def displayResponse(self, response_text):
-        self.response_label.setText(response_text)
-        self.show()
 
 
 if __name__ == "__main__":
