@@ -2,6 +2,7 @@ import sys
 import os
 import uuid
 import base64
+from dotenv import load_dotenv
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QVBoxLayout, QFileDialog, QSystemTrayIcon, QMenu, QAction, QShortcut
 from PyQt5.QtCore import Qt, QRect, QPoint
@@ -189,7 +190,7 @@ class ScreenCaptureApp(QWidget):
     def sendRequest(self):
         # Logic to send request to GPT-4 Vision API
         # This is a placeholder as the actual API details may vary
-        client = OpenAI(api_key="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")
+        client = OpenAI(api_key=os.getenv("API_KEY"))
 
         # response = client.completions.create(
         #   model="gpt-4-vision-preview",
@@ -226,7 +227,7 @@ class ScreenCaptureApp(QWidget):
 
 
         # api_url = "https://api.openai.com/v1/gpt-4-vision"
-        # headers = {"Authorization": "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"}
+        # headers = {"Authorization": "sk-"}
         # data = {
         #     "image": self.screenshot_path,
         #     "query": self.query_input.text()
@@ -258,6 +259,7 @@ class ScreenCaptureApp(QWidget):
 
 
 if __name__ == "__main__":
+    load_dotenv()
     app = QApplication(sys.argv)
     ex = ScreenCaptureApp()
     ex.show()
