@@ -2,6 +2,7 @@ import sys
 import os
 import uuid
 import base64
+import logging
 from dotenv import load_dotenv
 
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QLineEdit, QLabel, QVBoxLayout, QFileDialog, QSystemTrayIcon, QMenu, QAction, QShortcut
@@ -144,6 +145,17 @@ class ScreenCaptureApp(QWidget):
 
         self.shortcut = QShortcut(QKeySequence("Ctrl+Shift+X"), self)
         self.shortcut.activated.connect(self.captureScreen)
+        
+        self.setupLogging()
+
+    def setupLogging(self):
+        log_directory = "log"
+        if not os.path.exists(log_directory):
+            os.makedirs(log_directory)
+
+        logging.basicConfig(filename=os.path.join(log_directory, 'app.log'),
+                            level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
 
     def captureScreen(self):
         # Logic for screen capture
@@ -206,6 +218,8 @@ class ScreenCaptureApp(QWidget):
         #encode image
         self.encoded_image = encode_image(self.screenshot_path)
 
+        logging.info("Sending request to API with image: %s", self.screenshot_path)
+        
         response = client.chat.completions.create(
           model="gpt-4-vision-preview",
           messages=[
@@ -225,7 +239,11 @@ class ScreenCaptureApp(QWidget):
           max_tokens=200,
         )
 
-
+        if response.choices[0] != 0:
+            logging.info("Received response from API: %s", response.json())
+        else:
+            logging.error("API request failed with status code %s: %s", response.status_code, response.text)
+            
         # api_url = "https://api.openai.com/v1/gpt-4-vision"
         # headers = {"Authorization": "sk-"}
         # data = {
@@ -233,7 +251,7 @@ class ScreenCaptureApp(QWidget):
         #     "query": self.query_input.text()
         # }
         # response = requests.post(api_url, headers=headers, data=data)
-        self.displayResponse(response.json())
+        self.displayResponse(response)
         #self.displayResponse({"error": "API request failed"})
 
 
@@ -242,8 +260,15 @@ class ScreenCaptureApp(QWidget):
         if not hasattr(self, 'response_overlay'):
             self.response_overlay = ResponseOverlay(self)
 
-        response_text = response.get('content', '')  # Extract 'content' field
-        self.response_overlay.displayResponse(response_text)
+        choices = response.choices
+        #response_text = response.get('content', '')  # Extract 'content' field
+        if not choices:
+            responseerr = "error check log"
+            self.response_overlay.displayResponse(responseerr)
+        else:
+            index = 0
+            response_text = response.choices[index].message.content
+            self.response_overlay.displayResponse(response_text)
 
     # def setupKeyboardShortcut(self):
     #     # Setup a global keyboard shortcut
