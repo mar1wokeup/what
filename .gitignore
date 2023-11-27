@@ -6,3 +6,5 @@
 .env
 
 /dev/
+
+/log/

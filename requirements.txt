@@ -1,4 +1,4 @@
+openai
 PyQt5
 requests
-base64
 python-dotenv
